@@ -71,7 +71,7 @@ def display_flashcards(raw_text: str):
             if tip:
                 card_html += f"""
             <div style="margin-top:12px; background:#102010; border-left:3px solid #22c55e;
-                         padding:9px 13px; border-radius:6px; font-size:12px; color:{expl_color}; line-height:1.5;">
+                         padding:9px 13px; border-radius:6px; font-size:12px; color:#86efac; line-height:1.5;">
                 ⚡ <strong>Exam Tip:</strong> {tip}
             </div>"""
 
@@ -243,38 +243,38 @@ def display_quiz(raw_text: str):
             user_ans      = st.session_state.quiz_answers.get(idx, "")
             correct       = q["answer"].upper()
             is_ok         = user_ans.upper() == correct
-            icon, color, bg = ("✅","#22c55e","#071a0f") if is_ok else ("❌","#ef4444","#1a0707")
+            icon          = "✅" if is_ok else "❌"
+            card_color    = "#22c55e" if is_ok else "#ef4444"
+            card_bg       = "#071a0f" if is_ok else "#1a0707"
+            ans_color     = "#22c55e" if is_ok else "#f87171"
             user_opt_text = q["options"].get(user_ans.upper(), "Not answered")
             corr_opt_text = q["options"].get(correct, correct)
-            wrong_row = "" if is_ok else f"""
-                <div style="color:#94a3b8; font-size:12px; margin-bottom:2px;">
-                    Correct: <strong style="color:#22c55e;">{correct}) {corr_opt_text}</strong>
-                </div>"""
-            expl_color = "#22c55e" if is_ok else "#f59e0b"
-            expl_bg    = "#0f1a0f" if is_ok else "#1a1407"
+            display_ans   = user_ans if user_ans else "–"
 
-            expl_row = f"""
-            <div style="background:{expl_bg}; border-left:2px solid {expl_color}55;
-                 padding:5px 9px; border-radius:5px; color:{expl_color};
-                 font-size:11px; margin-top:5px;">
-            💡 {q['explanation']}
-            </div>
-            """ if q["explanation"] else ""
-
-            st.markdown(f"""
-            <div style="background:{bg}; border:1px solid {color}44; border-radius:10px;
-                        padding:12px 15px; margin-bottom:7px;">
-                <div style="color:{color}; font-weight:700; font-size:13px; margin-bottom:5px;">
-                    {icon} Q{idx+1}. {q['question']}
-                </div>
-                <div style="color:#cbd5e1; font-size:12px; margin-bottom:2px;">
-                    Your answer: <strong style="color:{'#22c55e' if is_ok else '#f87171'};">
-                        {user_ans or '–'}) {user_opt_text}
-                    </strong>
-                </div>
-                {wrong_row}{expl_row}
-            </div>
-            """, unsafe_allow_html=True)
+            card = (
+                '<div style="background:' + card_bg + '; border:1px solid ' + card_color + '44;'
+                ' border-radius:10px; padding:12px 15px; margin-bottom:7px;">'
+                '<div style="color:' + card_color + '; font-weight:700; font-size:13px; margin-bottom:5px;">' 
+                + icon + ' Q' + str(idx + 1) + '. ' + q['question'] +
+                '</div>'
+                '<div style="color:#cbd5e1; font-size:12px; margin-bottom:2px;">'
+                'Your answer: <strong style="color:' + ans_color + ';"> '
+                + display_ans + ') ' + user_opt_text +
+                '</strong></div>'
+            )
+            if not is_ok:
+                card += (
+                    '<div style="color:#94a3b8; font-size:12px; margin-bottom:2px;">'
+                    'Correct: <strong style="color:#22c55e;">' + correct + ') ' + corr_opt_text + '</strong></div>'
+                )
+            if q["explanation"]:
+                card += (
+                    '<div style="background:#0f1a0f; border-left:2px solid #22c55e55;'
+                    ' padding:5px 9px; border-radius:5px; color:#86efac;'
+                    ' font-size:11px; margin-top:5px;">💡 ' + q['explanation'] + '</div>'
+                )
+            card += '</div>'
+            st.markdown(card, unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────
