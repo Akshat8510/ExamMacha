@@ -147,7 +147,7 @@ def _parse_quiz(raw_text: str):
     return questions
 
 
-ddef display_quiz(raw_text: str):
+def display_quiz(raw_text: str):
     if "quiz_answers" not in st.session_state:
         st.session_state.quiz_answers = {}
     if "quiz_submitted" not in st.session_state:
@@ -157,30 +157,32 @@ ddef display_quiz(raw_text: str):
 
     if not questions:
         st.warning("Could not parse quiz questions. Try regenerating.")
+        with st.expander("Raw output (debug)"):
+            st.code(raw_text)
         return
 
     total = len(questions)
 
     # ── Header ──
     st.markdown(f"""
-<div style="background:linear-gradient(135deg,#0d1b35,#130d2e); border:1px solid #1e3a5f;
-            border-radius:14px; padding:16px 20px; margin-bottom:16px;">
-    <div style="font-size:17px; font-weight:800; color:#f8fafc; margin-bottom:3px;">📝 Practice Quiz</div>
-    <div style="color:#8b949e; font-size:12px;">{total} questions · Select one answer per question · Submit when done</div>
-</div>
-""", unsafe_allow_html=True)
+    <div style="background:linear-gradient(135deg,#0d1b35,#130d2e); border:1px solid #1e3a5f;
+                border-radius:14px; padding:16px 20px; margin-bottom:16px;">
+        <div style="font-size:17px; font-weight:800; color:#f8fafc; margin-bottom:3px;">📝 Practice Quiz</div>
+        <div style="color:#8b949e; font-size:12px;">{total} questions · Select one answer per question · Submit when done</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Questions ──
     for idx, q in enumerate(questions):
         st.markdown(f"""
-<div style="background:#0d1117; border:1px solid #1e3a5f; border-left:3px solid #3b82f6;
-            border-radius:10px; padding:13px 16px; margin-bottom:4px;">
-    <div style="color:#60a5fa; font-size:10px; font-weight:700; letter-spacing:1.5px; margin-bottom:5px;">
-        QUESTION {idx+1} / {total}
-    </div>
-    <div style="color:#f1f5f9; font-size:14px; font-weight:600; line-height:1.5;">{q['question']}</div>
-</div>
-""", unsafe_allow_html=True)
+        <div style="background:#0d1117; border:1px solid #1e3a5f; border-left:3px solid #3b82f6;
+                    border-radius:10px; padding:13px 16px; margin-bottom:4px;">
+            <div style="color:#60a5fa; font-size:10px; font-weight:700; letter-spacing:1.5px; margin-bottom:5px;">
+                QUESTION {idx+1} / {total}
+            </div>
+            <div style="color:#f1f5f9; font-size:14px; font-weight:600; line-height:1.5;">{q['question']}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
         opts = [f"{k})  {v}" for k, v in q["options"].items()]
         st.radio(
@@ -190,19 +192,19 @@ ddef display_quiz(raw_text: str):
             label_visibility="collapsed",
             disabled=st.session_state.quiz_submitted,
         )
-        
+        # Record answer from widget
         chosen = st.session_state.get(f"quiz_q_{idx}", "")
         if chosen:
             st.session_state.quiz_answers[idx] = chosen[0]
 
         st.markdown("<div style='margin-bottom:8px;'></div>", unsafe_allow_html=True)
 
-    # ── Buttons ──
+    # ── Submit / Retake button ──
     answered = len([v for v in st.session_state.quiz_answers.values() if v])
     c1, _ = st.columns([1, 2])
     with c1:
         if not st.session_state.quiz_submitted:
-            if st.button(f"✅ Submit ({answered}/{total})", use_container_width=True):
+            if st.button(f"✅ Submit  ({answered}/{total} answered)", use_container_width=True):
                 st.session_state.quiz_submitted = True
                 st.rerun()
         else:
@@ -213,41 +215,66 @@ ddef display_quiz(raw_text: str):
 
     # ── Results ──
     if st.session_state.quiz_submitted:
-        score = sum(1 for idx, q in enumerate(questions) if st.session_state.quiz_answers.get(idx, "").upper() == q["answer"].upper())
+        score = sum(
+            1 for idx, q in enumerate(questions)
+            if st.session_state.quiz_answers.get(idx, "").upper() == q["answer"].upper()
+        )
         pct = int(score / total * 100)
 
-        grade_color = "#22c55e" if pct >= 70 else ("#f59e0b" if pct >= 40 else "#ef4444")
-        
-        st.markdown(f"""
-<div style="background:#111827; border:2px solid {grade_color}; border-radius:14px; padding:18px; text-align:center; margin:14px 0;">
-    <div style="font-size:32px; font-weight:900; color:{grade_color};">{score}/{total} ({pct}%)</div>
-</div>
-<div style="font-weight:bold; margin-bottom:10px;">📋 Answer Review</div>
-""", unsafe_allow_html=True)
+        if pct >= 70:
+            grade_color, grade_msg, grade_icon = "#22c55e", "Excellent! Exam-ready! 🎉", "🏆"
+        elif pct >= 40:
+            grade_color, grade_msg, grade_icon = "#f59e0b", "Good effort! Review wrong answers 📖", "📚"
+        else:
+            grade_color, grade_msg, grade_icon = "#ef4444", "Keep going — you'll nail it! 💪", "💪"
 
+        st.markdown(f"""
+        <div style="background:#111827; border:2px solid {grade_color}; border-radius:14px;
+                    padding:18px; text-align:center; margin:14px 0;">
+            <div style="font-size:36px; margin-bottom:4px;">{grade_icon}</div>
+            <div style="font-size:32px; font-weight:900; color:{grade_color}; line-height:1;">{score}/{total}</div>
+            <div style="color:{grade_color}; font-weight:700; font-size:15px; margin-top:3px;">{pct}%</div>
+            <div style="color:#94a3b8; margin-top:6px; font-size:12px;">{grade_msg}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("**📋 Answer Review**")
         for idx, q in enumerate(questions):
-            user_ans = st.session_state.quiz_answers.get(idx, "")
-            correct = q["answer"].upper()
-            is_ok = user_ans.upper() == correct
-            
+            user_ans      = st.session_state.quiz_answers.get(idx, "")
+            correct       = q["answer"].upper()
+            is_ok         = user_ans.upper() == correct
             icon, color, bg = ("✅","#22c55e","#071a0f") if is_ok else ("❌","#ef4444","#1a0707")
             user_opt_text = q["options"].get(user_ans.upper(), "Not answered")
             corr_opt_text = q["options"].get(correct, correct)
-            
-            # THE FIX: Removed leading spaces inside triple quotes
-            wrong_row = "" if is_ok else f'<div style="color:#94a3b8; font-size:12px; margin-bottom:2px;">Correct: <strong style="color:#22c55e;">{correct}) {corr_opt_text}</strong></div>'
-            
+            wrong_row = "" if is_ok else f"""
+                <div style="color:#94a3b8; font-size:12px; margin-bottom:2px;">
+                    Correct: <strong style="color:#22c55e;">{correct}) {corr_opt_text}</strong>
+                </div>"""
             expl_color = "#22c55e" if is_ok else "#f59e0b"
-            expl_bg = "#0f1a0f" if is_ok else "#1a1407"
-            expl_row = f'<div style="background:{expl_bg}; border-left:2px solid {expl_color}; padding:8px; border-radius:5px; color:{expl_color}; font-size:11px; margin-top:5px;">💡 {q["explanation"]}</div>' if q["explanation"] else ""
+            expl_bg    = "#0f1a0f" if is_ok else "#1a1407"
+
+            expl_row = f"""
+            <div style="background:{expl_bg}; border-left:2px solid {expl_color}55;
+                 padding:5px 9px; border-radius:5px; color:{expl_color};
+                 font-size:11px; margin-top:5px;">
+            💡 {q['explanation']}
+            </div>
+            """ if q["explanation"] else ""
 
             st.markdown(f"""
-<div style="background:{bg}; border:1px solid {color}44; border-radius:10px; padding:12px 15px; margin-bottom:7px;">
-<div style="color:{color}; font-weight:700; font-size:13px; margin-bottom:5px;">{icon} Q{idx+1}. {q['question']}</div>
-<div style="color:#cbd5e1; font-size:12px; margin-bottom:2px;">Your answer: <strong style="color:{'#22c55e' if is_ok else '#f87171'};">{user_ans or '–'}) {user_opt_text}</strong></div>
-{wrong_row}{expl_row}
-</div>
-""", unsafe_allow_html=True)
+            <div style="background:{bg}; border:1px solid {color}44; border-radius:10px;
+                        padding:12px 15px; margin-bottom:7px;">
+                <div style="color:{color}; font-weight:700; font-size:13px; margin-bottom:5px;">
+                    {icon} Q{idx+1}. {q['question']}
+                </div>
+                <div style="color:#cbd5e1; font-size:12px; margin-bottom:2px;">
+                    Your answer: <strong style="color:{'#22c55e' if is_ok else '#f87171'};">
+                        {user_ans or '–'}) {user_opt_text}
+                    </strong>
+                </div>
+                {wrong_row}{expl_row}
+            </div>
+            """, unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────
