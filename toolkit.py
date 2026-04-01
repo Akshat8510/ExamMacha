@@ -250,8 +250,11 @@ def display_quiz(raw_text: str):
                 <div style="color:#94a3b8; font-size:12px; margin-bottom:2px;">
                     Correct: <strong style="color:#22c55e;">{correct}) {corr_opt_text}</strong>
                 </div>"""
+            expl_color = "#22c55e" if is_ok else "#f59e0b"
+            expl_bg    = "#0f1a0f" if is_ok else "#1a1407"
+
             expl_row = f"""
-                <div style="background:#0f1a0f; border-left:2px solid #22c55e55;
+                 <div style="background:{expl_bg}; border-left:2px solid {expl_color}55;
                              padding:5px 9px; border-radius:5px; color:#86efac; font-size:11px; margin-top:5px;">
                     💡 {q['explanation']}
                 </div>""" if q["explanation"] else ""
