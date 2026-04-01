@@ -1,91 +1,100 @@
 import streamlit as st
-import os
-import numpy as np
-from pypdf import PdfReader
-from groq import Groq
-from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
+import os
+import engine
+import toolkit
+import search
 
 load_dotenv()
 
-# --- INITIALIZE ---
-st.set_page_config(page_title="ExamMacha", page_icon="🎓")
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+# --- 1. CONFIG ---
+st.set_page_config(page_title="ExamMacha Studio", layout="wide")
 
-st.title("🎓 ExamMacha (Lean Version)")
+# NotebookLM Styling
+st.markdown("""
+    <style>
+    .stApp { background-color: #0f1115; color: #e2e8f0; }
+    [data-testid="stSidebar"] { background-color: #1a1d23; border-right: 1px solid #334155; }
+    .stButton>button { width: 100%; border-radius: 8px; height: 50px; background-color: #1e293b; color: white; border: 1px solid #334155; }
+    .stButton>button:hover { background-color: #2563eb; border-color: #3b82f6; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# --- 1. PDF EXTRACTION ---
-def get_pdf_text(pdf_docs):
-    text = ""
-    for pdf in pdf_docs:
-        pdf_reader = PdfReader(pdf)
-        for page in pdf_reader.pages:
-            text += page.extract_text()
-    return text
+api_key = os.getenv("GROQ_API_KEY")
 
-# --- 2. CHUNKING & SEARCH ---
-def create_chunks(text, chunk_size=1000):
-    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+# --- 2. LAYOUT ---
+chat_col, studio_col = st.columns([2, 1], gap="large")
 
-def get_relevant_chunks(query, chunks, top_k=3):
-    query_emb = embed_model.encode([query])
-    chunk_embs = embed_model.encode(chunks)
-    # Simple Cosine Similarity using Numpy
-    similarities = np.dot(chunk_embs, query_emb.T).flatten()
-    top_indices = np.argsort(similarities)[-top_k:][::-1]
-    return [chunks[i] for i in top_indices]
-
-# --- UI SIDEBAR ---
+# LEFT: SIDEBAR (SOURCES)
 with st.sidebar:
-    st.header("📂 Notes")
-    uploaded_files = st.file_uploader("Upload PDF", type="pdf", accept_multiple_files=True)
-    if st.button("Reset Everything"):
+    st.title("📚 Sources")
+    uploaded_files = st.file_uploader("Add study material", accept_multiple_files=True, type=['pdf', 'pptx'])
+    st.markdown("---")
+    web_enabled = st.toggle("🌐 Fast Research (Web)")
+    help_me = st.toggle("🆘 HELP ME Mode")
+    if st.button("🗑️ Clear Everything"):
         st.session_state.clear()
         st.rerun()
 
-# --- MAIN LOGIC ---
-if uploaded_files:
-    if "chunks" not in st.session_state:
-        with st.spinner("Macha is reading your PDFs..."):
-            raw_text = get_pdf_text(uploaded_files)
-            st.session_state.chunks = create_chunks(raw_text)
-            st.success("Notes Loaded!")
+# CENTER: CHAT
+with chat_col:
+    st.title("🎓 ExamMacha Chat")
+    if uploaded_files:
+        if "vectorstore" not in st.session_state:
+            with st.spinner("Indexing sources..."):
+                st.session_state.vectorstore = engine.process_documents(uploaded_files)
+        
+        # Now passing help_me_mode correctly!
+        rag_chain = engine.get_rag_chain(st.session_state.vectorstore, api_key, help_me_mode=help_me)
 
-    # --- CHAT UI ---
-    if "messages" not in st.session_state: st.session_state.messages = []
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+        chat_container = st.container(height=500)
+        if "messages" not in st.session_state: st.session_state.messages = []
+        
+        with chat_container:
+            for m in st.session_state.messages:
+                with st.chat_message(m["role"]): st.markdown(m["content"])
 
-    if query := st.chat_input("Ask Macha..."):
-        st.session_state.messages.append({"role": "user", "content": query})
-        with st.chat_message("user"): st.markdown(query)
+        if query := st.chat_input("Ask about your notes..."):
+            st.session_state.messages.append({"role": "user", "content": query})
+            with chat_container:
+                with st.chat_message("user"): st.markdown(query)
+                with st.chat_message("assistant"):
+                    final_input = query
+                    if web_enabled:
+                        web_context = search.perform_web_search(query)
+                        final_input = f"Web Context: {web_context}\nQuestion: {query}"
+                    
+                    response = rag_chain.invoke({"input": final_input})
+                    st.markdown(response["answer"])
+                    st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
+    else:
+        st.info("👈 Upload notes in the 'Sources' sidebar to start.")
 
-        with st.chat_message("assistant"):
-            # RAG Search
-            context_chunks = get_relevant_chunks(query, st.session_state.chunks)
-            context = "\n".join(context_chunks)
-            
-            # Direct Groq Call (No LangChain!)
-            response = client.chat.completions.create(
-                model="llama3-70b-8192",
-                messages=[
-                    {"role": "system", "content": f"You are 'Macha', a helpful senior. Answer using this context: {context}"},
-                    {"role": "user", "content": query}
-                ]
-            )
-            ans = response.choices[0].message.content
-            st.markdown(ans)
-            st.session_state.messages.append({"role": "assistant", "content": ans})
+# RIGHT: STUDIO
+with studio_col:
+    st.title("🎨 Studio")
+    if uploaded_files and "vectorstore" in st.session_state:
+        # TILE 1: FLASHCARDS
+        if st.button("🗂️ Flashcards"):
+            st.session_state.flash_raw = toolkit.generate_flashcards(rag_chain)
+        if "flash_raw" in st.session_state:
+            with st.expander("Flashcards", expanded=True):
+                toolkit.display_flashcards(st.session_state.flash_raw)
 
-            # --- TOOLKIT (Simple Buttons) ---
-            st.divider()
-            if st.button("📝 Summarize these chunks"):
-                summary = client.chat.completions.create(
-                    model="llama3-70b-8192",
-                    messages=[{"role": "user", "content": f"Summarize this for an exam: {context}"}]
-                )
-                st.info(summary.choices[0].message.content)
+        # TILE 2: QUIZ
+        if st.button("📝 Practice Quiz"):
+            st.session_state.quiz_raw = toolkit.generate_quiz(rag_chain)
+        if "quiz_raw" in st.session_state:
+            with st.expander("Quiz", expanded=True):
+                st.markdown(st.session_state.quiz_raw)
 
-else:
-    st.warning("👈 Upload a PDF to start.")
+        # TILE 3: MIND MAP
+        if st.button("🧠 Mind Map"):
+            st.session_state.map_raw = toolkit.generate_mindmap(rag_chain)
+        if "map_raw" in st.session_state:
+            with st.expander("Mind Map Code", expanded=True):
+                mm = st.session_state.map_raw
+                if "```mermaid" in mm: mm = mm.split("```mermaid")[1].split("```")[0]
+                st.code(mm.strip(), language="mermaid")
+    else:
+        st.caption("Unlock studio tools by adding sources.")
