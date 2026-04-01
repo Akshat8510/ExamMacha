@@ -84,7 +84,7 @@ def process_documents(uploaded_files):
             "The file may contain only images or negligible text."
         )
 
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-MiniLM-L3-v2")
     return FAISS.from_documents(chunks, embeddings)
 
 
