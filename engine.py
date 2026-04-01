@@ -10,6 +10,7 @@ from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 
 
+@st.cache_resource
 def process_documents(uploaded_files):
     all_docs = []
     failed_files = []
