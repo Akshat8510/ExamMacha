@@ -27,24 +27,32 @@ def process_documents(uploaded_files):
     chunks = splitter.split_documents(all_docs)
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     return FAISS.from_documents(chunks, embeddings)
+# In engine.py
+
+# In engine.py
 
 def get_rag_chain(vectorstore, api_key, help_me_mode=False):
-    # Fixed model name and parameter
     llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key)
     
+    persona = (
+        "You are 'Macha', a legendary senior. \n"
+        "You are looking at two things: 1) The user's NOTES and 2) Extra information found from the INTERNET.\n"
+        "If the answer is in the NOTES, use that first. If it's not, look at the INTERNET data provided in the user's message.\n"
+        "ONLY if both are empty, say: 'Macha can't find this in your notes or the web.'\n"
+        "Don't be a robot—if the internet info is there, USE IT to answer the junior!"
+    )
+    
     if help_me_mode:
-        persona = (
-            "You are 'Macha' in 'HELP ME' mode. A junior is panicking because the exam is tomorrow. "
-            "Explain concepts using simple analogies (cricket, food, movies). "
-            "Keep it very simple, use short points, and bold the EXACT keywords needed for marks."
-        )
-    else:
-        persona = (
-            "You are 'Macha', a legendary senior who got an S-grade. "
-            "Provide accurate, structured, and professional academic answers based on the context."
-        )
+        persona += "\nExplain using funny analogies like we are in the canteen."
 
-    system_prompt = f"{persona} \n\nContext: {{context}}"
+    # Note: We keep the system prompt but make it more flexible
+    system_prompt = f"{persona} \n\nNOTES CONTEXT: {{context}}"
+    
+    from langchain_core.prompts import ChatPromptTemplate
     prompt = ChatPromptTemplate.from_messages([("system", system_prompt), ("human", "{input}")])
+    
+    from langchain.chains.combine_documents import create_stuff_documents_chain
+    from langchain.chains import create_retrieval_chain
+    
     combine_docs_chain = create_stuff_documents_chain(llm, prompt)
     return create_retrieval_chain(vectorstore.as_retriever(), combine_docs_chain)
