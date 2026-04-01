@@ -2,7 +2,6 @@ import streamlit as st
 import streamlit.components.v1 as components
 import re
 import html as html_lib
-import textwrap
 
 
 # ─────────────────────────────────────────
