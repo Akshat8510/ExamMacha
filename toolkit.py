@@ -214,27 +214,17 @@ ddef display_quiz(raw_text: str):
 
     # ── Results ──
     if st.session_state.quiz_submitted:
-        score = sum(
-            1 for idx, q in enumerate(questions)
-            if st.session_state.quiz_answers.get(idx, "").upper() == q["answer"].upper()
-        )
+        score = sum(1 for idx, q in enumerate(questions) if st.session_state.quiz_answers.get(idx, "").upper() == q["answer"].upper())
         pct = int(score / total * 100)
 
-        # Determine colors based on score
         grade_color = "#22c55e" if pct >= 70 else ("#f59e0b" if pct >= 40 else "#ef4444")
-        grade_icon = "🏆" if pct >= 70 else ("📚" if pct >= 40 else "💪")
-
-        # 1. SCORE CARD (Using dedent to remove leading spaces)
-        st.markdown(textwrap.dedent(f"""
-            <div style="background:#111827; border:2px solid {grade_color}; border-radius:14px;
-                        padding:18px; text-align:center; margin:14px 0;">
-                <div style="font-size:36px; margin-bottom:4px;">{grade_icon}</div>
-                <div style="font-size:32px; font-weight:900; color:{grade_color}; line-height:1;">{score}/{total}</div>
-                <div style="color:{grade_color}; font-weight:700; font-size:15px; margin-top:3px;">{pct}%</div>
-            </div>
-        """), unsafe_allow_html=True)
-
-        st.markdown("**📋 Answer Review**")
+        
+        st.markdown(f"""
+<div style="background:#111827; border:2px solid {grade_color}; border-radius:14px; padding:18px; text-align:center; margin:14px 0;">
+    <div style="font-size:32px; font-weight:900; color:{grade_color};">{score}/{total} ({pct}%)</div>
+</div>
+<div style="font-weight:bold; margin-bottom:10px;">📋 Answer Review</div>
+""", unsafe_allow_html=True)
 
         for idx, q in enumerate(questions):
             user_ans = st.session_state.quiz_answers.get(idx, "")
@@ -245,31 +235,20 @@ ddef display_quiz(raw_text: str):
             user_opt_text = q["options"].get(user_ans.upper(), "Not answered")
             corr_opt_text = q["options"].get(correct, correct)
             
-            # 2. WRONG ANSWER ROW (Zero indentation inside the string)
-            wrong_row = ""
-            if not is_ok:
-                wrong_row = f"""<div style="color:#94a3b8; font-size:12.5px; margin-top:4px;">Correct: <strong style="color:#22c55e;">{correct}) {corr_opt_text}</strong></div>"""
+            # THE FIX: Removed leading spaces inside triple quotes
+            wrong_row = "" if is_ok else f'<div style="color:#94a3b8; font-size:12px; margin-bottom:2px;">Correct: <strong style="color:#22c55e;">{correct}) {corr_opt_text}</strong></div>'
             
-            # 3. EXPLANATION ROW
             expl_color = "#22c55e" if is_ok else "#f59e0b"
-            expl_bg    = "#0f1a0f" if is_ok else "#1a1407"
-            expl_row = ""
-            if q["explanation"]:
-                expl_row = f"""<div style="background:{expl_bg}; border-left:2px solid {expl_color}; padding:8px 12px; border-radius:6px; color:{expl_color}; font-size:12px; margin-top:8px;">💡 {q['explanation']}</div>"""
+            expl_bg = "#0f1a0f" if is_ok else "#1a1407"
+            expl_row = f'<div style="background:{expl_bg}; border-left:2px solid {expl_color}; padding:8px; border-radius:5px; color:{expl_color}; font-size:11px; margin-top:5px;">💡 {q["explanation"]}</div>' if q["explanation"] else ""
 
-            # 4. FINAL QUESTION CARD (Using dedent)
-            st.markdown(textwrap.dedent(f"""
-                <div style="background:{bg}; border:1px solid {color}44; border-radius:10px; padding:15px; margin-bottom:10px;">
-                    <div style="color:{color}; font-weight:700; font-size:14px; margin-bottom:8px;">
-                        {icon} Q{idx+1}. {q['question']}
-                    </div>
-                    <div style="color:#cbd5e1; font-size:13px;">
-                        Your answer: <strong style="color:{'#22c55e' if is_ok else '#f87171'};">{user_ans or '–'}) {user_opt_text}</strong>
-                    </div>
-                    {wrong_row}
-                    {expl_row}
-                </div>
-            """), unsafe_allow_html=True)
+            st.markdown(f"""
+<div style="background:{bg}; border:1px solid {color}44; border-radius:10px; padding:12px 15px; margin-bottom:7px;">
+<div style="color:{color}; font-weight:700; font-size:13px; margin-bottom:5px;">{icon} Q{idx+1}. {q['question']}</div>
+<div style="color:#cbd5e1; font-size:12px; margin-bottom:2px;">Your answer: <strong style="color:{'#22c55e' if is_ok else '#f87171'};">{user_ans or '–'}) {user_opt_text}</strong></div>
+{wrong_row}{expl_row}
+</div>
+""", unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────
