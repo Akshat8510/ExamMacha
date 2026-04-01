@@ -252,8 +252,8 @@ def display_quiz(raw_text: str):
             display_ans   = user_ans if user_ans else "–"
 
             correct_html = f'<div style="color:#94a3b8;font-size:12px;margin-bottom:2px;">Correct: <strong style="color:#22c55e;">{correct}) {corr_opt_text}</strong></div>' if not is_ok else ""
-        explanation_html = f'<div style="background:#0f1a0f;border-left:2px solid #22c55e55;padding:5px 9px;border-radius:5px;color:#86efac;font-size:11px;margin-top:5px;">💡 {q["explanation"]}</div>' if q["explanation"] else ""
-        st.markdown(f'<div style="background:{card_bg};border:1px solid {card_color}44;border-radius:10px;padding:12px 15px;margin-bottom:7px;"><div style="color:{card_color};font-weight:700;font-size:13px;margin-bottom:5px;">{icon} Q{idx+1}. {q["question"]}</div><div style="color:#cbd5e1;font-size:12px;margin-bottom:2px;">Your answer: <strong style="color:{ans_color};"> {display_ans}) {user_opt_text}</strong></div>{correct_html}{explanation_html}</div>', unsafe_allow_html=True)
+            explanation_html = f'<div style="background:#0f1a0f;border-left:2px solid #22c55e55;padding:5px 9px;border-radius:5px;color:#86efac;font-size:11px;margin-top:5px;">💡 {q["explanation"]}</div>' if q["explanation"] else ""
+            st.markdown(f'<div style="background:{card_bg};border:1px solid {card_color}44;border-radius:10px;padding:12px 15px;margin-bottom:7px;"><div style="color:{card_color};font-weight:700;font-size:13px;margin-bottom:5px;">{icon} Q{idx+1}. {q["question"]}</div><div style="color:#cbd5e1;font-size:12px;margin-bottom:2px;">Your answer: <strong style="color:{ans_color};"> {display_ans}) {user_opt_text}</strong></div>{correct_html}{explanation_html}</div>', unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────
