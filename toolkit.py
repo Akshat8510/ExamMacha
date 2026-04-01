@@ -71,7 +71,7 @@ def display_flashcards(raw_text: str):
             if tip:
                 card_html += f"""
             <div style="margin-top:12px; background:#102010; border-left:3px solid #22c55e;
-                         padding:9px 13px; border-radius:6px; font-size:12px; color:#86efac; line-height:1.5;">
+                         padding:9px 13px; border-radius:6px; font-size:12px; color:{expl_color}; line-height:1.5;">
                 ⚡ <strong>Exam Tip:</strong> {tip}
             </div>"""
 
@@ -254,10 +254,12 @@ def display_quiz(raw_text: str):
             expl_bg    = "#0f1a0f" if is_ok else "#1a1407"
 
             expl_row = f"""
-                 <div style="background:{expl_bg}; border-left:2px solid {expl_color}55;
-                             padding:5px 9px; border-radius:5px; color:#86efac; font-size:11px; margin-top:5px;">
-                    💡 {q['explanation']}
-                </div>""" if q["explanation"] else ""
+            <div style="background:{expl_bg}; border-left:2px solid {expl_color}55;
+                 padding:5px 9px; border-radius:5px; color:{expl_color};
+                 font-size:11px; margin-top:5px;">
+            💡 {q['explanation']}
+            </div>
+            """ if q["explanation"] else ""
 
             st.markdown(f"""
             <div style="background:{bg}; border:1px solid {color}44; border-radius:10px;
