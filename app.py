@@ -10,7 +10,7 @@ load_dotenv()
 # 1. PAGE CONFIG
 # ═══════════════════════════════════════════
 st.set_page_config(
-    page_title="ExamMacha Studio",
+    page_title="PrepGraph Studio",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -339,7 +339,7 @@ def render_mermaid(code: str):
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-logo">
-        <div class="logo-text">ExamMacha</div>
+        <div class="logo-text">PrepGraph</div>
         <div class="logo-sub">AI Study Studio</div>
     </div>
     """, unsafe_allow_html=True)
@@ -419,7 +419,7 @@ with chat_col:
                         font-size:22px;">🎓</div>
             <div>
                 <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:800;
-                            color:#f8fafc; letter-spacing:-0.02em;">ExamMacha Chat</div>
+                            color:#f8fafc; letter-spacing:-0.02em;">PrepGraph Chat</div>
                 <div style="font-size:12px; color:#8b949e;">Your AI senior is ready to help</div>
             </div>
         </div>
@@ -526,7 +526,7 @@ with chat_col:
             <div class="welcome-card">
                 <div style="font-size:48px; margin-bottom:16px;">📚</div>
                 <div style="font-family:'Syne',sans-serif; font-size:22px; font-weight:800;
-                            color:#f8fafc; margin-bottom:10px;">Welcome to ExamMacha!</div>
+                            color:#f8fafc; margin-bottom:10px;">Welcome to PrepGraph!</div>
                 <div style="color:#8b949e; font-size:14px; line-height:1.7; margin-bottom:16px;">
                     Your personal AI study senior — designed for every student who wants to
                     actually <strong style="color:#60a5fa;">understand</strong>, not just memorize.
