@@ -361,13 +361,13 @@ with st.sidebar:
 
     st.markdown('<div class="section-label">⚙️ Intelligence</div>', unsafe_allow_html=True)
     web_enabled = st.toggle("🌐 Web Search", help="Enable real-time web search to supplement your notes")
-    help_me_mode = st.toggle("🆘 MacchaHelp Mode", help="Structured exam format: Definition → Concept → Diagram → Formula → Conclusion")
+    help_me_mode = st.toggle("🆘 PrepHelp Mode", help="Structured exam format: Definition → Concept → Diagram → Formula → Conclusion")
 
     if help_me_mode:
         st.markdown("""
         <div style="background:#1a0f35; border:1px solid #4c1d95; border-radius:8px;
                     padding:10px 12px; margin-top:6px; font-size:11px; color:#c4b5fd; line-height:1.6;">
-            <strong>📌 MacchaHelp Format</strong><br>
+            <strong>📌 PrepHelp Format</strong><br>
             1️⃣ Definition &nbsp; 2️⃣ Concept<br>
             3️⃣ Diagram &nbsp; 4️⃣ Formula<br>
             5️⃣ Exam Conclusion
